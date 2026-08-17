@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const { sendSMS, sendEmail } = require('../services/notificationService');
 
 exports.createOrder = async (req, res, next) => {
     try {
@@ -39,6 +40,13 @@ exports.createOrder = async (req, res, next) => {
 
         product.quantity_quintals -= quantity_quintals;
         await product.save();
+
+        // Notify Farmer about new order
+        const farmer = await User.findById(product.farmerId);
+        if (farmer) {
+            await sendSMS(farmer.phone, `New Order Received! ${quantity_quintals} quintals of ${product.name}. Please check your dashboard for details.`);
+            await sendEmail(farmer.email, 'New Order Received - Annadata Digital', `You have received a new order of ${quantity_quintals} quintals of ${product.name}. Please check your dashboard for details.`);
+        }
 
         res.status(201).json({
             success: true,
@@ -115,6 +123,12 @@ exports.updateOrderStatus = async (req, res, next) => {
         }
 
         await order.save();
+
+        // Notify Consumer on Status Update
+        if (order.consumerId) {
+            await sendSMS(order.consumerId.phone, `Order #${order._id} status updated to: ${order.status}`);
+            await sendEmail(order.consumerId.email, 'Order Status Update', `Your order #${order._id} is now ${order.status}.`);
+        }
 
         res.status(200).json({
             success: true,
