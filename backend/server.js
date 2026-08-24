@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const path = require('path');
-const errorHandler = require('./middleware/errorMiddleware');
+const errorHandler = require('./middleware/errorHandler');
 const { checkExpiredGroupDeals } = require('./services/automationService');
 
 dotenv.config();
@@ -22,9 +22,7 @@ app.get('/api/v1/health' , (req,res) => {
     res.status(200).json({ success: true , message: 'Annadata Digital API Server is Running'});
 });
 
-// app.get('/' , (req,res) => {
-//     res.send("Annadata Digital Backend is running...");
-// });
+
 
 app.use('/api/v1/auth', require('./routes/authRoutes'));
 app.use('/api/v1/users', require('./routes/userRoutes'));
@@ -44,6 +42,10 @@ setInterval(() => {
 }, 10 * 60 * 1000);
 
 const PORT = process.env.PORT || 8000;
+
+app.get('/' , (req,res) => {
+    res.send("Annadata Digital Backend is running...");
+});
 
 app.listen(PORT , () => {
     console.log(`Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`)
