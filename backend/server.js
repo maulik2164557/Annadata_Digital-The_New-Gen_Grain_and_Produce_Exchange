@@ -4,6 +4,7 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const path = require('path');
 const errorHandler = require('./middleware/errorMiddleware');
+const { checkExpiredGroupDeals } = require('./services/automationService');
 
 dotenv.config();
 
@@ -36,6 +37,11 @@ app.use('/api/v1/admin', require('./routes/adminRoutes'));
 
 
 app.use(errorHandler);
+
+// Schedule Automation Service (Runs every 10 minutes)
+setInterval(() => {
+  checkExpiredGroupDeals();
+}, 10 * 60 * 1000);
 
 const PORT = process.env.PORT || 8000;
 

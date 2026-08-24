@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { sendSMS, sendEmail } = require('../services/notificationService');
 
 exports.updateUserApprovalStatus = async (req, res, next) => {
     try {
@@ -15,6 +16,10 @@ exports.updateUserApprovalStatus = async (req, res, next) => {
 
         user.status = status;
         await user.save();
+
+        // Send account status update notification
+        await sendSMS(user.phone, `Your Annadata Digital account status has been updated to: ${status}`);
+        await sendEmail(user.email, 'Account Status Update - Annadata Digital', `Your account status is now ${status}.`);
 
         res.status(200).json({
             success: true,
