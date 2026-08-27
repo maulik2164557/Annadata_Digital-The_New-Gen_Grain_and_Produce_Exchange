@@ -22,7 +22,6 @@ const GroupPurchaseSchema = new mongoose.Schema(
     },
     discount_percentage: {
       type: Number,
-      required: [true, 'Please specify bulk discount percentage'],
       min: 0,
       max: 100,
     },

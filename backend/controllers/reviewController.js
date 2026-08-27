@@ -49,3 +49,26 @@ exports.addReview = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.getFarmerReviews = async (req, res, next) => {
+    try {
+        const { farmerId } = req.params;
+
+        const reviews = await Review.find({ farmerId })
+            .populate('reviewerId', 'name email phone role')
+            .sort({ createdAt: -1 });
+
+        const avgRating = reviews.length > 0
+            ? (reviews.reduce((acc, item) => acc + item.ratingStars, 0) / reviews.length).toFixed(1)
+            : 0;
+
+        res.status(200).json({
+            success: true,
+            count: reviews.length,
+            averageRating: Number(avgRating),
+            data: reviews
+        });
+    } catch (error) {
+        next(error);
+    }
+};

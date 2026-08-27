@@ -9,7 +9,13 @@ const protect = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      token = req.headers.authorization.split(' ')[1];
+      // Clean up whitespace around Bearer prefix
+      token = req.headers.authorization.split(' ')[1]?.trim();
+
+      if (!token || token === 'undefined' || token === 'null') {
+        return res.status(401).json({ success: false, message: 'Invalid token format' });
+      }
+
       const decoded = verifyToken(token);
 
       req.user = await User.findById(decoded.id).select('-passwordHash');
@@ -20,12 +26,10 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      console.error('JWT Verification Error:', error.message);
       return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
-  }
-
-  if (!token) {
+  } else {
     return res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
   }
 };

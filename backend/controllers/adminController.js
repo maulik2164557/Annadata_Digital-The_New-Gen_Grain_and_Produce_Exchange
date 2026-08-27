@@ -3,7 +3,15 @@ const { sendSMS, sendEmail } = require('../services/notificationService');
 
 exports.updateUserApprovalStatus = async (req, res, next) => {
     try {
-        const { status } = req.body;
+        // Fallback supports status, isApproved, or approvalStatus payload keys
+        const statusValue = req.body.status || req.body.approvalStatus || (req.body.isApproved ? 'Approved' : 'Rejected');
+
+        if (!statusValue) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a valid status or isApproved field in request body'
+            });
+        }
 
         const user = await User.findById(req.params.id);
 
@@ -14,16 +22,17 @@ exports.updateUserApprovalStatus = async (req, res, next) => {
             });
         }
 
-        user.status = status;
+        user.status = statusValue;
+        user.isApproved = statusValue === 'Approved';
         await user.save();
 
         // Send account status update notification
-        await sendSMS(user.phone, `Your Annadata Digital account status has been updated to: ${status}`);
-        await sendEmail(user.email, 'Account Status Update - Annadata Digital', `Your account status is now ${status}.`);
+        await sendSMS(user.phone, `Your Annadata Digital account status has been updated to: ${statusValue}`);
+        await sendEmail(user.email, 'Account Status Update - Annadata Digital', `Your account status is now ${statusValue}.`);
 
         res.status(200).json({
             success: true,
-            message: `User status updated to ${status}`,
+            message: `User status updated to ${statusValue}`,
             data: user
         });
     } catch (error) {
