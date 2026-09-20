@@ -1,0 +1,11 @@
+{
+  "name": "annadata-digital",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run build && npm start --prefix backend",
+    "dev": "npm run dev --prefix backend"
+  }
+}

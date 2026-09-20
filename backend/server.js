@@ -5,9 +5,11 @@ const cors = require('cors');
 const path = require('path');
 const errorHandler = require('./middleware/errorHandler');
 const { checkExpiredGroupDeals } = require('./services/automationService');
+const { validateJwtConfig } = require('./config/jwt');
 
 dotenv.config();
 
+validateJwtConfig();
 connectDB();
 
 const app = express();
@@ -34,7 +36,8 @@ app.use('/api/v1/reviews', require('./routes/reviewRoutes'));
 app.use('/api/v1/admin', require('./routes/adminRoutes'));
 
 
-app.use(errorHandler);
+const frontendBuildPath = path.join(__dirname, '../frontend/build');
+app.use(express.static(frontendBuildPath));
 
 // Schedule Automation Service (Runs every 10 minutes)
 setInterval(() => {
@@ -43,9 +46,14 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 8000;
 
-app.get('/' , (req,res) => {
-    res.send("Annadata Digital Backend is running...");
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+        return next();
+    }
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
+
+app.use(errorHandler);
 
 app.listen(PORT , () => {
     console.log(`Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`)

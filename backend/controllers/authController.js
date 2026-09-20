@@ -41,6 +41,8 @@ exports.registerUser = async (req, res, next) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                phone: user.phone,
+                address: user.address,
                 role: user.role,
                 status: user.status
             }
@@ -98,6 +100,8 @@ exports.loginUser = async (req, res, next) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                phone: user.phone,
+                address: user.address,
                 role: user.role,
                 status: user.status
             }

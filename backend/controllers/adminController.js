@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Product = require('../models/Product');
+const Order = require('../models/Order');
 const { sendSMS, sendEmail } = require('../services/notificationService');
 
 exports.updateUserApprovalStatus = async (req, res, next) => {
@@ -48,6 +50,27 @@ exports.getAllUsers = async (req, res, next) => {
             success: true,
             count: users.length,
             data: users
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getAdminOverview = async (req, res, next) => {
+    try {
+        const [users, products, orders] = await Promise.all([
+            User.find().select('-passwordHash'),
+            Product.find().populate('farmerId', 'name email phone address'),
+            Order.find()
+                .populate('productId', 'name category price_per_quintal')
+                .populate('consumerId', 'name email phone address')
+                .populate('farmerId', 'name email phone address')
+                .sort({ createdAt: -1 })
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: { users, products, orders }
         });
     } catch (error) {
         next(error);

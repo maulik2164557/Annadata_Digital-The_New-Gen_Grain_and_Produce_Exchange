@@ -2,8 +2,12 @@ const Product = require('../models/Product');
 
 exports.getProducts = async (req, res, next) => {
     try {
-        const { category, search } = req.query;
+        const { category, search, farmerId } = req.query;
         let query = { isApproved: true };
+
+        if (farmerId) {
+            query.farmerId = farmerId;
+        }
 
         if (category) {
             query.category = category;
@@ -60,6 +64,13 @@ exports.getProductById = async (req, res, next) => {
 
 exports.createProduct = async (req, res, next) => {
     try {
+        if (req.user.role === 'Farmer' && req.user.status !== 'Approved') {
+            return res.status(403).json({
+                success: false,
+                message: 'Your farmer account must be approved before listing produce'
+            });
+        }
+
         req.body.farmerId = req.user.id;
 
         if (req.files && req.files.length > 0) {

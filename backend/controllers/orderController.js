@@ -96,7 +96,8 @@ exports.updateOrderStatus = async (req, res, next) => {
     try {
         const { status, paymentStatus } = req.body;
 
-        let order = await Order.findById(req.params.id);
+        let order = await Order.findById(req.params.id)
+            .populate('consumerId', 'name phone email');
 
         if (!order) {
             return res.status(404).json({
@@ -123,19 +124,48 @@ exports.updateOrderStatus = async (req, res, next) => {
             order.paymentStatus = paymentStatus;
         }
 
+        if (status === 'Confirmed') {
+            order.paymentStatus = 'Completed';
+        }
+
         await order.save();
 
-        // Notify Consumer on Status Update
         if (order.consumerId) {
             await sendSMS(order.consumerId.phone, `Order #${order._id} status updated to: ${order.status}`);
             await sendEmail(order.consumerId.email, 'Order Status Update', `Your order #${order._id} is now ${order.status}.`);
+
+            if (status === 'Confirmed') {
+                await sendSMS(order.consumerId.phone, `Payment confirmed for order #${order._id}. Payment to the farmer is marked completed.`);
+                await sendEmail(order.consumerId.email, 'Payment Confirmation - Annadata Digital', `Payment for order #${order._id} has been completed and sent to the farmer.`);
+            }
         }
 
         res.status(200).json({
             success: true,
             data: order
         });
+
+        if (status === 'Confirmed') {
+            setTimeout(() => updateOrderStatusAutomatically(order._id), 5000);
+        }
     } catch (error) {
         next(error);
     }
 };
+
+async function updateOrderStatusAutomatically(orderId) {
+    const order = await Order.findById(orderId).populate('consumerId', 'phone email');
+    if (!order || order.status !== 'Confirmed') return;
+    order.status = 'Dispatched';
+    await order.save();
+    await sendSMS(order.consumerId.phone, `Order #${order._id} has been dispatched.`);
+    await sendEmail(order.consumerId.email, 'Order Dispatched - Annadata Digital', `Your order #${order._id} has been dispatched.`);
+    setTimeout(async () => {
+        const delivered = await Order.findById(orderId).populate('consumerId', 'phone email');
+        if (!delivered || delivered.status !== 'Dispatched') return;
+        delivered.status = 'Delivered';
+        await delivered.save();
+        await sendSMS(delivered.consumerId.phone, `Order #${delivered._id} has been delivered.`);
+        await sendEmail(delivered.consumerId.email, 'Order Delivered - Annadata Digital', `Your order #${delivered._id} has been delivered.`);
+    }, 5000);
+}
