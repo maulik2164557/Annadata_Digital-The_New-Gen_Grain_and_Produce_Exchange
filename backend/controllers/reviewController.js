@@ -1,6 +1,7 @@
 const Review = require('../models/Review');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 exports.addReview = async (req, res, next) => {
     try {
@@ -56,7 +57,21 @@ exports.getFarmerReviews = async (req, res, next) => {
 
         const reviews = await Review.find({ farmerId })
             .populate('reviewerId', 'name email phone role')
+            .populate({
+                path: 'orderId',
+                select: 'productId',
+                populate: { path: 'productId', select: 'name category harvest_date' }
+            })
             .sort({ createdAt: -1 });
+
+        const products = await Product.find({ farmerId })
+            .select('name category harvest_date averageRating')
+            .sort({ createdAt: -1 });
+
+        const productsWithReviews = products.map(product => ({
+            ...product.toObject(),
+            reviews: reviews.filter(review => review.orderId?.productId?._id?.toString() === product._id.toString())
+        }));
 
         const avgRating = reviews.length > 0
             ? (reviews.reduce((acc, item) => acc + item.ratingStars, 0) / reviews.length).toFixed(1)
@@ -66,6 +81,7 @@ exports.getFarmerReviews = async (req, res, next) => {
             success: true,
             count: reviews.length,
             averageRating: Number(avgRating),
+            products: productsWithReviews,
             data: reviews
         });
     } catch (error) {

@@ -205,8 +205,6 @@ exports.updateOrderStatus = async (req, res, next) => {
             );
             await sendSMS(farmer.phone, `[Annadata] Order delivered! ${order.quantity_quintals} qtl of "${order.productId?.name}" successfully delivered to ${consumer?.name}.`);
 
-            // Also notify consumer
-            await createNotification(consumer._id, `Your order of "${order.productId?.name}" is marked as delivered. Thank you!`, 'order_delivered', order._id);
         } else {
             return res.status(400).json({ success: false, message: `Invalid status transition to "${status}"` });
         }
@@ -257,7 +255,12 @@ exports.updatePaymentStatus = async (req, res, next) => {
             );
         }
 
-        res.status(200).json({ success: true, data: order });
+        const updatedOrder = await Order.findById(order._id)
+            .populate('productId', 'name price_per_quintal category description')
+            .populate('farmerId', 'name phone email upiId address averageRating')
+            .populate('consumerId', 'name phone email address');
+
+        res.status(200).json({ success: true, data: updatedOrder });
     } catch (error) {
         next(error);
     }
