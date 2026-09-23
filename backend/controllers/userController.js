@@ -29,6 +29,11 @@ exports.updateUserProfile = async (req, res, next) => {
             email: req.body.email
         };
 
+        // Allow farmers to update their UPI ID
+        if (req.body.upiId !== undefined) {
+            fieldsToUpdate.upiId = req.body.upiId;
+        }
+
         const user = await User.findByIdAndUpdate(
             req.user.id,
             fieldsToUpdate,

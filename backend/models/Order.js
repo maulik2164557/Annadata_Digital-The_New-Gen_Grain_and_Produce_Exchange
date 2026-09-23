@@ -40,6 +40,10 @@ const OrderSchema = new mongoose.Schema(
       enum: ['Pending', 'Completed', 'Failed', 'Refunded'],
       default: 'Pending',
     },
+    transporter: {
+      name: { type: String },
+      phone: { type: String },
+    },
   },
   { timestamps: true }
 );

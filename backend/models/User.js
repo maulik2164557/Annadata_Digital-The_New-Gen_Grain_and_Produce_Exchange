@@ -52,6 +52,12 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Farmer UPI ID for receiving payments
+    upiId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
   },
   { timestamps: true }
 );

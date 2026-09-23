@@ -34,6 +34,7 @@ app.use('/api/v1/group-buying', require('./routes/groupBuyingRoutes'));
 app.use('/api/v1/orders', require('./routes/orderRoutes'));
 app.use('/api/v1/reviews', require('./routes/reviewRoutes'));
 app.use('/api/v1/admin', require('./routes/adminRoutes'));
+app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
 
 
 const frontendBuildPath = path.join(__dirname, '../frontend/build');
